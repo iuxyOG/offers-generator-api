@@ -1,0 +1,40 @@
+{
+  "info": {
+    "name": "Value-AI OfertaRelampaggo",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Generate Offer",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Mouse Gamer\",\n  \"preco\": 99.9,\n  \"categoria\": \"eletronicos\",\n  \"estoque\": 8,\n  \"margem\": 12\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/offers/generate",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "offers",
+            "generate"
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    }
+  ]
+}
