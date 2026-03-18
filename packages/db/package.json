@@ -1,0 +1,27 @@
+{
+  "name": "@ofertas/db",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src/",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "seed": "tsx src/seed.ts"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.38.4",
+    "postgres": "^3.4.0"
+  },
+  "devDependencies": {
+    "@ofertas/tsconfig": "workspace:*",
+    "@types/node": "^25.5.0",
+    "drizzle-kit": "^0.30.6",
+    "tsx": "^4.7.0",
+    "typescript": "^5.4.0"
+  }
+}

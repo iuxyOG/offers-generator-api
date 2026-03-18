@@ -1,0 +1,21 @@
+{
+  "name": "@ofertas/pricing",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src/",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@ofertas/validators": "workspace:*"
+  },
+  "devDependencies": {
+    "@ofertas/tsconfig": "workspace:*",
+    "@types/node": "^25.5.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}
