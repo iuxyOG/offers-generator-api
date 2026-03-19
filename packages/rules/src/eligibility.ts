@@ -10,6 +10,14 @@ export function checkEligibility(
   produto: ProductForEligibility,
   config: EligibilityConfig,
 ): EligibilityResult {
+  // 0. Custo deve estar preenchido
+  if (produto.custo <= 0) {
+    return {
+      eligible: false,
+      motivo: 'Custo não informado (R$ 0). Preencha o custo antes de automatizar.',
+    }
+  }
+
   // 1. Estoque >= minimo
   if (produto.estoque < config.estoqueMinimo) {
     return {

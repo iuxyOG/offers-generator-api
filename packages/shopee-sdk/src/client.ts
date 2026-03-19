@@ -2,6 +2,7 @@ import { createHmac } from 'crypto'
 import type { ShopeeConfig, ShopeeRequestParams } from './types'
 
 const DEFAULT_BASE_URL = 'https://partner.shopeemobile.com'
+// Sandbox: https://openplatform.sandbox.test-stable.shopee.sg
 const TIMEOUT_MS = 30_000
 const MAX_RETRIES = 3
 const INITIAL_BACKOFF_MS = 1_000
@@ -10,9 +11,11 @@ export class ShopeeClient {
   readonly partnerId: number
   readonly partnerKey: string
   readonly shopId: number
-  readonly accessToken: string
+  private accessToken: string
   private readonly baseUrl: string
   private readonly limiter: ReturnType<typeof createRateLimiter>
+  private readonly onTokenExpired?: () => Promise<{ accessToken: string } | null>
+  private isRetrying = false
 
   constructor(config: ShopeeConfig) {
     this.partnerId = config.partnerId
@@ -21,6 +24,7 @@ export class ShopeeClient {
     this.accessToken = config.accessToken
     this.baseUrl = config.baseUrl ?? DEFAULT_BASE_URL
     this.limiter = createRateLimiter(10)
+    this.onTokenExpired = config.onTokenExpired
   }
 
   sign(path: string, timestamp: number): string {
@@ -62,10 +66,24 @@ export class ShopeeClient {
 
           clearTimeout(timeoutId)
 
-          const data = (await res.json()) as T
+          const data = (await res.json()) as T & { error?: string }
 
           if (res.status >= 500) {
             throw new Error(`Shopee API ${res.status}: ${JSON.stringify(data)}`)
+          }
+
+          // Auto-refresh expired token
+          if (data.error === 'error_auth' && this.onTokenExpired && !this.isRetrying) {
+            this.isRetrying = true
+            try {
+              const newToken = await this.onTokenExpired()
+              if (newToken) {
+                this.accessToken = newToken.accessToken
+                return this.request<T>(params)
+              }
+            } finally {
+              this.isRetrying = false
+            }
           }
 
           return data

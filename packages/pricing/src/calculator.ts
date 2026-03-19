@@ -35,7 +35,7 @@ export function calculateDiscountedPrice(
 }
 
 export function calculateMargin(sellingPrice: number, costPrice: number): number {
-  if (costPrice === 0) return 0
+  if (sellingPrice === 0) return 0
   return Math.round(((sellingPrice - costPrice) / sellingPrice) * 10000) / 100
 }
 

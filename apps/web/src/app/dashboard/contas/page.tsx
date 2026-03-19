@@ -3,7 +3,6 @@
 import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { trpc } from '@/lib/trpc'
-import { getToken } from '@/lib/auth'
 
 const statusLabels: Record<string, { label: string; color: string }> = {
   active: { label: 'Conectada', color: 'bg-green-100 text-green-800' },
@@ -35,14 +34,20 @@ function ContasContent() {
     },
   })
 
-  function connectShopee() {
-    const token = getToken()
-    if (!token) {
-      alert('Faça login primeiro')
-      return
-    }
+  async function connectShopee() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
-    window.location.href = `${apiUrl}/auth/shopee/connect?token=${token}`
+    // Use credentials: include to send HttpOnly cookie for auth
+    const res = await fetch(`${apiUrl}/auth/shopee/connect`, {
+      credentials: 'include',
+      redirect: 'manual',
+    })
+    // The API returns a redirect to Shopee — follow it
+    const location = res.headers.get('location')
+    if (location) {
+      window.location.href = location
+    } else {
+      alert('Erro ao conectar com a Shopee. Faça login novamente.')
+    }
   }
 
   function isTokenExpired(expiresAt: string | Date | null): boolean {

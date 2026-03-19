@@ -1,18 +1,22 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getToken } from '@/lib/auth'
 
-function parseJwt(token: string): Record<string, unknown> | null {
+const EMPTY = { tenantId: null, userId: null, email: null }
+
+function getUserInfo(): { tenantId: string; userId: string; email: string } | null {
+  if (typeof window === 'undefined') return null
+  const cookie = document.cookie
+    .split('; ')
+    .find((c) => c.startsWith('user_info='))
+    ?.split('=')[1]
+  if (!cookie) return null
   try {
-    const payload = token.split('.')[1]
-    return JSON.parse(atob(payload))
+    return JSON.parse(decodeURIComponent(cookie))
   } catch {
     return null
   }
 }
-
-const EMPTY = { tenantId: null, userId: null, email: null }
 
 export function useCurrentTenant() {
   const [data, setData] = useState<{
@@ -22,16 +26,15 @@ export function useCurrentTenant() {
   }>(EMPTY)
 
   useEffect(() => {
-    const token = getToken()
-    if (!token) {
+    const info = getUserInfo()
+    if (!info) {
       setData(EMPTY)
       return
     }
-    const payload = parseJwt(token)
     setData({
-      tenantId: (payload?.tenantId as string) ?? null,
-      userId: (payload?.userId as string) ?? null,
-      email: (payload?.email as string) ?? null,
+      tenantId: info.tenantId ?? null,
+      userId: info.userId ?? null,
+      email: info.email ?? null,
     })
   }, [])
 

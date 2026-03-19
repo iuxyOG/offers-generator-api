@@ -4,6 +4,7 @@ export interface ShopeeConfig {
   shopId: number
   accessToken: string
   baseUrl?: string
+  onTokenExpired?: () => Promise<{ accessToken: string } | null>
 }
 
 export interface ShopeeRequestParams {

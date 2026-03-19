@@ -2,6 +2,7 @@ import { createHmac } from 'crypto'
 import type { RefreshTokenResponse } from './types'
 
 const DEFAULT_BASE_URL = 'https://partner.shopeemobile.com'
+const DEFAULT_AUTH_URL = 'https://partner.shopeemobile.com'
 
 export interface GetAccessTokenResponse {
   access_token: string
@@ -18,18 +19,31 @@ export class ShopeeAuthAPI {
   readonly partnerId: number
   private readonly partnerKey: string
   readonly baseUrl: string
+  readonly authUrl: string
 
-  constructor(config: { partnerId: number; partnerKey: string; baseUrl?: string }) {
+  constructor(config: { partnerId: number; partnerKey: string; baseUrl?: string; authUrl?: string }) {
     this.partnerId = config.partnerId
     this.partnerKey = config.partnerKey
     this.baseUrl = config.baseUrl ?? DEFAULT_BASE_URL
+    this.authUrl = config.authUrl ?? DEFAULT_AUTH_URL
   }
 
   /**
    * Generates HMAC-SHA256 signature for auth endpoints (no accessToken/shopId).
+   * Formula: sign = hex(HMAC-SHA256(partner_key, str(partner_id) + path + str(timestamp)))
    */
   signAuth(path: string, timestamp: number): string {
     const baseString = `${this.partnerId}${path}${timestamp}`
+
+    if (process.env.SHOPEE_DEBUG) {
+      console.log(`[shopee-sdk] signAuth:`)
+      console.log(`  partner_id: ${this.partnerId}`)
+      console.log(`  path: ${path}`)
+      console.log(`  timestamp: ${timestamp}`)
+      console.log(`  baseString: "${baseString}"`)
+      console.log(`  key prefix: ${this.partnerKey.slice(0, 8)}... (len=${this.partnerKey.length})`)
+    }
+
     return createHmac('sha256', this.partnerKey).update(baseString).digest('hex')
   }
 
@@ -41,7 +55,8 @@ export class ShopeeAuthAPI {
     const timestamp = Math.floor(Date.now() / 1000)
     const sign = this.signAuth(path, timestamp)
 
-    const url = new URL(`${this.baseUrl}${path}`)
+    // OAuth redirect always uses authUrl (partner.shopeemobile.com)
+    const url = new URL(`${this.authUrl}${path}`)
     url.searchParams.set('partner_id', String(this.partnerId))
     url.searchParams.set('timestamp', String(timestamp))
     url.searchParams.set('sign', sign)
@@ -58,10 +73,13 @@ export class ShopeeAuthAPI {
     const timestamp = Math.floor(Date.now() / 1000)
     const sign = this.signAuth(path, timestamp)
 
-    const url = new URL(`${this.baseUrl}${path}`)
+    // Auth token endpoints use authUrl (partner.shopeemobile.com), not baseUrl (sandbox API)
+    const url = new URL(`${this.authUrl}${path}`)
     url.searchParams.set('partner_id', String(this.partnerId))
     url.searchParams.set('timestamp', String(timestamp))
     url.searchParams.set('sign', sign)
+
+    console.log(`[shopee-sdk] getAccessToken: ${url.toString()}`)
 
     const res = await fetch(url.toString(), {
       method: 'POST',
@@ -84,7 +102,8 @@ export class ShopeeAuthAPI {
     const timestamp = Math.floor(Date.now() / 1000)
     const sign = this.signAuth(path, timestamp)
 
-    const url = new URL(`${this.baseUrl}${path}`)
+    // Auth token endpoints use authUrl (partner.shopeemobile.com), not baseUrl (sandbox API)
+    const url = new URL(`${this.authUrl}${path}`)
     url.searchParams.set('partner_id', String(this.partnerId))
     url.searchParams.set('timestamp', String(timestamp))
     url.searchParams.set('sign', sign)

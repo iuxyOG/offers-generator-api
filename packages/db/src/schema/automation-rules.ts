@@ -17,6 +17,7 @@ export const automationRules = pgTable(
     ativo: boolean('ativo').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },
   (table) => ({
     tenantIdIdx: index('automation_rules_tenant_id_idx').on(table.tenantId),

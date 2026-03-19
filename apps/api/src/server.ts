@@ -15,7 +15,10 @@ import { shopeeOAuthRoutes } from './routes/shopee-oauth'
 const server = Fastify({ logger: true })
 
 async function start() {
-  await server.register(cors, { origin: true })
+  await server.register(cors, {
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true,
+  })
 
   await server.register(fastifyTRPCPlugin, {
     prefix: '/trpc',
@@ -27,8 +30,6 @@ async function start() {
 
   server.get('/health', async () => ({ status: 'ok' }))
 
-  console.log(`[env] SHOPEE_PARTNER_ID=${process.env.SHOPEE_PARTNER_ID}`)
-  console.log(`[env] SHOPEE_BASE_URL=${process.env.SHOPEE_BASE_URL}`)
   console.log(`[env] DATABASE_URL=${process.env.DATABASE_URL ? 'set' : 'NOT SET'}`)
 
   const port = Number(process.env.PORT) || 3001

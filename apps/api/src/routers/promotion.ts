@@ -145,6 +145,14 @@ export const promotionRouter = router({
         )
         .returning()
 
+      // Mark products as in active campaign
+      for (const item of input.items) {
+        await db
+          .update(products)
+          .set({ emCampanhaAtiva: true, updatedAt: new Date() })
+          .where(eq(products.id, item.productId))
+      }
+
       return { ...promo, items: insertedItems }
     }),
 

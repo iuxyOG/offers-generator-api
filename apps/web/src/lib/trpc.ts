@@ -3,7 +3,6 @@
 import { type CreateTRPCReact, createTRPCReact } from '@trpc/react-query'
 import { httpBatchLink } from '@trpc/client'
 import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server'
-import { getToken } from './auth'
 
 type AppRouter = import('@ofertas/api/src/router').AppRouter
 
@@ -16,10 +15,9 @@ export function createTRPCClientInstance() {
   return trpc.createClient({
     links: [
       httpBatchLink({
-        url: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/trpc',
-        headers() {
-          const token = getToken()
-          return token ? { Authorization: `Bearer ${token}` } : {}
+        url: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/trpc`,
+        fetch(url, options) {
+          return fetch(url, { ...options, credentials: 'include' })
         },
       }),
     ],

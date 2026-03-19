@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { router, protectedProcedure } from '../trpc'
 import { db } from '@ofertas/db'
 import { automationRules, automationLogs } from '@ofertas/db'
-import { eq, and, desc, sql, count } from 'drizzle-orm'
+import { eq, and, desc, sql, count, isNull, inArray } from 'drizzle-orm'
 import { TRPCError } from '@trpc/server'
 
 export const automationRuleRouter = router({
@@ -13,7 +13,10 @@ export const automationRuleRouter = router({
       }).optional(),
     )
     .query(async ({ ctx, input }) => {
-      const conditions = [eq(automationRules.tenantId, ctx.tenantId)]
+      const conditions = [
+        eq(automationRules.tenantId, ctx.tenantId),
+        isNull(automationRules.deletedAt),
+      ]
 
       if (input?.accountId) {
         conditions.push(eq(automationRules.accountId, input.accountId))
@@ -25,28 +28,34 @@ export const automationRuleRouter = router({
         .where(and(...conditions))
         .orderBy(desc(automationRules.createdAt))
 
-      // For each rule, get last execution info
-      const result = await Promise.all(
-        rules.map(async (rule) => {
-          const [lastLog] = await db
-            .select()
-            .from(automationLogs)
-            .where(eq(automationLogs.regraId, rule.id))
-            .orderBy(desc(automationLogs.createdAt))
-            .limit(1)
+      if (rules.length === 0) return []
 
-          const estrategia = (rule.acoesJson as Record<string, unknown>)?.estrategia as string | undefined
+      // Fetch all logs for these rules in a single query, ordered by most recent
+      const ruleIds = rules.map((r) => r.id)
+      const allLogs = await db
+        .select()
+        .from(automationLogs)
+        .where(inArray(automationLogs.regraId, ruleIds))
+        .orderBy(desc(automationLogs.createdAt))
 
-          return {
-            ...rule,
-            estrategia: estrategia ?? 'MODERADA',
-            lastRun: lastLog?.createdAt?.toISOString() ?? null,
-            lastResult: lastLog?.resultado ?? null,
-          }
-        }),
-      )
+      // Keep only the most recent log per rule
+      const logMap = new Map<string, (typeof allLogs)[number]>()
+      for (const log of allLogs) {
+        if (log.regraId && !logMap.has(log.regraId)) {
+          logMap.set(log.regraId, log)
+        }
+      }
 
-      return result
+      return rules.map((rule) => {
+        const lastLog = logMap.get(rule.id)
+        const estrategia = (rule.acoesJson as Record<string, unknown>)?.estrategia as string | undefined
+        return {
+          ...rule,
+          estrategia: estrategia ?? 'MODERADA',
+          lastRun: lastLog?.createdAt?.toISOString() ?? null,
+          lastResult: lastLog?.resultado ?? null,
+        }
+      })
     }),
 
   getById: protectedProcedure
@@ -186,7 +195,10 @@ export const automationRuleRouter = router({
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Regra não encontrada' })
       }
 
-      await db.delete(automationRules).where(eq(automationRules.id, input.id))
+      await db
+        .update(automationRules)
+        .set({ ativo: false, deletedAt: new Date(), updatedAt: new Date() })
+        .where(eq(automationRules.id, input.id))
       return { success: true }
     }),
 })
