@@ -74,6 +74,12 @@ describe('checkEligibility', () => {
     expect(result.precoRecomendado).toBe(92)
   })
 
+  it('rejeita produto com custo=0', () => {
+    const result = checkEligibility({ ...baseProduto, custo: 0 }, baseConfig)
+    expect(result.eligible).toBe(false)
+    expect(result.motivo).toContain('Custo não informado')
+  })
+
   it('respeita descontoMax', () => {
     const result = checkEligibility(baseProduto, {
       ...baseConfig,

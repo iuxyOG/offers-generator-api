@@ -54,8 +54,12 @@ describe('calculateMargin (legacy)', () => {
     expect(calculateMargin(50, 30)).toBe(40)
   })
 
-  it('retorna 0 quando custo é 0', () => {
-    expect(calculateMargin(100, 0)).toBe(0)
+  it('retorna 100% quando custo é 0', () => {
+    expect(calculateMargin(100, 0)).toBe(100)
+  })
+
+  it('retorna 0 quando preço de venda é 0', () => {
+    expect(calculateMargin(0, 50)).toBe(0)
   })
 })
 

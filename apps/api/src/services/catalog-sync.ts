@@ -1,4 +1,4 @@
-import { db } from '@ofertas/db'
+import { db, decrypt } from '@ofertas/db'
 import { accounts, products } from '@ofertas/db'
 import { eq, and } from 'drizzle-orm'
 import { ShopeeClient, ShopeeProductAPI } from '@ofertas/shopee-sdk'
@@ -23,7 +23,7 @@ export async function runCatalogSync({ tenantId, accountId }: CatalogSyncParams)
     partnerId: Number(process.env.SHOPEE_PARTNER_ID),
     partnerKey: process.env.SHOPEE_PARTNER_KEY!,
     shopId: Number(account.shopeeShopId),
-    accessToken: account.shopeeToken,
+    accessToken: decrypt(account.shopeeToken),
     baseUrl: process.env.SHOPEE_BASE_URL,
   })
 

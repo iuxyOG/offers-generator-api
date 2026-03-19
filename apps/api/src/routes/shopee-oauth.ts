@@ -2,7 +2,7 @@ import { createHmac, randomUUID } from 'crypto'
 import type { FastifyInstance } from 'fastify'
 import { ShopeeAuthAPI } from '@ofertas/shopee-sdk'
 import { db } from '@ofertas/db'
-import { accounts } from '@ofertas/db'
+import { accounts, encrypt } from '@ofertas/db'
 import { eq, and } from 'drizzle-orm'
 import { verifyJwt } from '../context'
 
@@ -127,8 +127,8 @@ export function shopeeOAuthRoutes(server: FastifyInstance) {
       await db
         .update(accounts)
         .set({
-          shopeeToken: tokenRes.access_token,
-          shopeeRefreshToken: tokenRes.refresh_token,
+          shopeeToken: encrypt(tokenRes.access_token),
+          shopeeRefreshToken: encrypt(tokenRes.refresh_token),
           shopeeTokenExpiresAt: expiresAt,
           status: 'active',
           updatedAt: new Date(),
@@ -142,8 +142,8 @@ export function shopeeOAuthRoutes(server: FastifyInstance) {
           tenantId,
           nome: `Loja Sandbox #${shopId}`,
           shopeeShopId: String(shopId),
-          shopeeToken: tokenRes.access_token,
-          shopeeRefreshToken: tokenRes.refresh_token,
+          shopeeToken: encrypt(tokenRes.access_token),
+          shopeeRefreshToken: encrypt(tokenRes.refresh_token),
           shopeeTokenExpiresAt: expiresAt,
           status: 'active',
         })
@@ -210,8 +210,8 @@ export function shopeeOAuthRoutes(server: FastifyInstance) {
       await db
         .update(accounts)
         .set({
-          shopeeToken: tokenRes.access_token,
-          shopeeRefreshToken: tokenRes.refresh_token,
+          shopeeToken: encrypt(tokenRes.access_token),
+          shopeeRefreshToken: encrypt(tokenRes.refresh_token),
           shopeeTokenExpiresAt: expiresAt,
           status: 'active',
           updatedAt: new Date(),
@@ -225,8 +225,8 @@ export function shopeeOAuthRoutes(server: FastifyInstance) {
           tenantId,
           nome: `Loja Shopee #${shopId}`,
           shopeeShopId: String(shopId),
-          shopeeToken: tokenRes.access_token,
-          shopeeRefreshToken: tokenRes.refresh_token,
+          shopeeToken: encrypt(tokenRes.access_token),
+          shopeeRefreshToken: encrypt(tokenRes.refresh_token),
           shopeeTokenExpiresAt: expiresAt,
           status: 'active',
         })
